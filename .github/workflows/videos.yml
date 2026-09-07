@@ -9,20 +9,25 @@ jobs:
   gerar-videos:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - idioma: pt
             voz: pt-PT-RaquelNeural
             pesquisa: "portugal travel aerial"
+            topico: "Descobre as passagens mais baratas da semana e viaja sem gastar uma fortuna."
           - idioma: en
             voz: en-US-JennyNeural
             pesquisa: "europe travel aerial"
+            topico: "Discover this week's cheapest flights and travel without breaking the bank."
           - idioma: es
             voz: es-ES-ElviraNeural
             pesquisa: "spain travel aerial"
+            topico: "Descubre los vuelos mas baratos de la semana y viaja sin gastar una fortuna."
           - idioma: fr
             voz: fr-FR-DeniseNeural
             pesquisa: "france travel aerial"
+            topico: "Decouvre les vols les moins chers de la semaine et voyage sans te ruiner."
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
@@ -40,7 +45,7 @@ jobs:
       - name: Gerar vídeo (${{ matrix.idioma }})
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          TOPICO: ${{ vars.TOPICO_DO_DIA }}
+          TOPICO: ${{ matrix.topico }}
         run: |
           python3 videos/gerar_video.py \
             --topico "$TOPICO" \
