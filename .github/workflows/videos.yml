@@ -1,0 +1,67 @@
+name: Vídeos automáticos 4 idiomas
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # todos os dias às 08:00 UTC
+  workflow_dispatch:        # botão "Run workflow" para testar na hora
+
+jobs:
+  gerar-videos:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - idioma: pt
+            voz: pt_PT-tugão-medium
+            pesquisa: "portugal travel aerial"
+            topico: "Descobre as passagens mais baratas da semana e viaja sem gastar uma fortuna."
+          - idioma: en
+            voz: en_US-lessac-medium
+            pesquisa: "europe travel aerial"
+            topico: "Discover this week's cheapest flights and travel without breaking the bank."
+          - idioma: es
+            voz: es_ES-davefx-medium
+            pesquisa: "spain travel aerial"
+            topico: "Descubre los vuelos mas baratos de la semana y viaja sin gastar una fortuna."
+          - idioma: fr
+            voz: fr_FR-siwis-medium
+            pesquisa: "france travel aerial"
+            topico: "Decouvre les vols les moins chers de la semaine et voyage sans te ruiner."
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar ffmpeg e dependências
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install -r videos/requirements_video.txt
+
+      - name: Gerar vídeo (${{ matrix.idioma }})
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          TOPICO: ${{ matrix.topico }}
+        run: |
+          python3 videos/gerar_video.py \
+            --topico "$TOPICO" \
+            --voz "${{ matrix.voz }}" \
+            --pesquisa "${{ matrix.pesquisa }}" \
+            --saida "video_${{ matrix.idioma }}.mp4"
+
+      - name: Guardar vídeo como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ matrix.idioma }}
+          path: video_${{ matrix.idioma }}.mp4
+
+      # Próximo passo (a construir depois de autorizares o YouTube no Make):
+      # enviar video_${{ matrix.idioma }}.mp4 para um webhook do Make, que
+      # publica na playlist certa do YouTube (uploadVideo + addVideoPlaylist).
+      # Próximo passo (a construir depois de autorizares o YouTube no Make):
+            # enviar video_${{ matrix.idioma }}.mp4 para um webhook do Make, que
+                  # publica na playlist certa do YouTube (uploadVideo + addVideoPlaylist).
