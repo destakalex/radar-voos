@@ -1,0 +1,55 @@
+name: Vídeos automáticos 4 idiomas
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  gerar-videos:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - idioma: pt
+            voz: pt-PT-RaquelNeural
+            pesquisa: "portugal travel aerial"
+          - idioma: en
+            voz: en-US-JennyNeural
+            pesquisa: "europe travel aerial"
+          - idioma: es
+            voz: es-ES-ElviraNeural
+            pesquisa: "spain travel aerial"
+          - idioma: fr
+            voz: fr-FR-DeniseNeural
+            pesquisa: "france travel aerial"
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar ffmpeg e dependências
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install -r videos/requirements_video.txt
+
+      - name: Gerar vídeo (${{ matrix.idioma }})
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          TOPICO: ${{ vars.TOPICO_DO_DIA }}
+        run: |
+          python3 videos/gerar_video.py \
+            --topico "$TOPICO" \
+            --voz "${{ matrix.voz }}" \
+            --pesquisa "${{ matrix.pesquisa }}" \
+            --saida "video_${{ matrix.idioma }}.mp4"
+
+      - name: Guardar vídeo como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ matrix.idioma }}
+          path: video_${{ matrix.idioma }}.mp4
