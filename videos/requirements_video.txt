@@ -1,2 +1,2 @@
-edge-tts
+piper-tts
 requests
